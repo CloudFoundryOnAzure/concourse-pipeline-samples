@@ -1,0 +1,166 @@
+groups:
+- name: hybrid-scenario
+  jobs:
+  - run-tests
+  - deploy-app-on-azure
+  - load-tests-on-azure
+  - promote-new-version-on-azure
+  - deploy-app-on-azure-stack
+  - load-tests-on-azure-stack
+  - promote-new-version-on-azure-stack
+
+resources:
+- name: eshop
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/CloudFoundryOnAzure/eShopOnWeb.git
+- name: concourse-pipeline-samples
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/CloudFoundryOnAzure/concourse-pipeline-samples.git
+- name: cf-on-azure
+  type: cf
+  source:
+    api:          {{cf-on-azure-api}}
+    username:     {{cf-on-azure-username}}
+    password:     {{cf-on-azure-password}}
+    organization: {{cf-on-azure-organization}}
+    space:        {{cf-on-azure-space}}
+    skip_cert_check: true
+- name: cf-on-azure-stack
+  type: cf
+  source:
+    api:          {{cf-on-azure-stack-api}}
+    username:     {{cf-on-azure-stack-username}}
+    password:     {{cf-on-azure-stack-password}}
+    organization: {{cf-on-azure-stack-organization}}
+    space:        {{cf-on-azure-stack-space}}
+    skip_cert_check: true
+
+jobs:
+- name: run-tests
+  serial: true
+  public: true
+  plan:
+  - get: eshop
+    trigger: true
+  - get: concourse-pipeline-samples
+    trigger: true
+  - task: run-tests
+    file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/run-tests.yml
+
+- name: deploy-app-on-azure
+  serial: true
+  public: true
+  plan:
+  - get: eshop
+    trigger: true
+  - get: concourse-pipeline-samples
+    trigger: true
+    passed:
+      - run-tests
+  - task: prepare-app-manifest
+    file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/app-manifest-prep.yml
+    params:
+      CF_STAGING_DOMAIN:        {{cf-on-azure-staging-domain}}
+      CF_SERVICE_NAME:          {{cf-on-azure-service-name}}
+      CF_SERVICE_INSTANCE_NAME: {{cf-service-instance-name}}
+      CF_APP_NAME:              {{cf-app-name}}
+  - put: cf-on-azure
+    params:
+      manifest: app-manifest-output/manifest.yml
+      path: eshop
+      current_app_name: eshop
+      show_app_log: true
+
+- name: deploy-app-on-azure-stack
+  serial: true
+  public: true
+  plan:
+  - get: eshop
+    trigger: true
+  - get: concourse-pipeline-samples
+    trigger: true
+    passed:
+      - run-tests
+  - task: prepare-app-manifest
+    file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/app-manifest-prep.yml
+    params:
+      CF_STAGING_DOMAIN:        {{cf-on-azure-stack-staging-domain}}
+      CF_SERVICE_NAME:          {{cf-on-azure-stack-service-name}}
+      CF_SERVICE_INSTANCE_NAME: {{cf-service-instance-name}}
+      CF_APP_NAME:              {{cf-app-name}}
+  - put: cf-on-azure-stack
+    params:
+      manifest: app-manifest-output/manifest.yml
+      path: eshop
+      current_app_name: eshop
+      show_app_log: true
+
+- name: load-tests-on-azure
+  serial: true
+  public: true
+  plan:
+  - get: concourse-pipeline-samples
+    trigger: true
+    passed:
+      - deploy-app-on-azure
+  - task: run-load-tests
+    file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/load-tests.yml
+    params:
+      CF_APP_NAME:       {{cf-app-name}}
+      CF_STAGING_DOMAIN: {{cf-on-azure-staging-domain}}
+
+- name: load-tests-on-azure-stack
+  serial: true
+  public: true
+  plan:
+  - get: concourse-pipeline-samples
+    trigger: true
+    passed:
+      - deploy-app-on-azure-stack
+  - task: run-load-tests
+    file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/load-tests.yml
+    params:
+      CF_APP_NAME:       {{cf-app-name}}
+      CF_STAGING_DOMAIN: {{cf-on-azure-stack-staging-domain}}
+
+- name: promote-new-version-on-azure
+  serial: true
+  public: true
+  plan:
+  - get: concourse-pipeline-samples
+    trigger: false
+    passed:
+      - load-tests-on-azure
+  - task: switch-app-routes
+    file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/update-routes.yml
+    params:
+      CF_API:        {{cf-on-azure-api}}
+      CF_USER:       {{cf-on-azure-username}}
+      CF_PWD:        {{cf-on-azure-password}}
+      CF_ORG:        {{cf-on-azure-organization}}
+      CF_SPACE:      {{cf-on-azure-space}}
+      CF_APP_NAME:   {{cf-app-name}}
+      CF_APP_DOMAIN: {{cf-app-domain}}
+
+- name: promote-new-version-on-azure-stack
+  serial: true
+  public: true
+  plan:
+  - get: concourse-pipeline-samples
+    trigger: false
+    passed:
+      - load-tests-on-azure-stack
+  - task: switch-app-routes
+    file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/update-routes.yml
+    params:
+      CF_API:        {{cf-on-azure-stack-api}}
+      CF_USER:       {{cf-on-azure-stack-username}}
+      CF_PWD:        {{cf-on-azure-stack-password}}
+      CF_ORG:        {{cf-on-azure-stack-organization}}
+      CF_SPACE:      {{cf-on-azure-stack-space}}
+      CF_APP_NAME:   {{cf-app-name}}
+      CF_APP_DOMAIN: {{cf-app-domain}}

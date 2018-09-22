@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+echo "Installing artillery for load tests: https://artillery.io/docs/getting-started/"
+
+npm install -g artillery
+
+export NEXT_APP_URL=http://$CF_APP_NAME.$CF_STAGING_DOMAIN/
+
+echo "Running artillery load tests for $NEXT_APP_URL"
+
+artillery quick --duration 10 --rate 20 $NEXT_APP_URL

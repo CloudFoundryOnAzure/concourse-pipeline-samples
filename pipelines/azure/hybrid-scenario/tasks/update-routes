@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -xe
+
+pwd
+env
+
+cf api $CF_API --skip-ssl-validation
+
+cf login -u $CF_USER -p $CF_PWD -o "$CF_ORG" -s "$CF_SPACE"
+
+cf apps
+
+cf routes
+
+cf map-route $CF_APP_NAME $CF_APP_DOMAIN --hostname $CF_APP_NAME
+
+cf routes

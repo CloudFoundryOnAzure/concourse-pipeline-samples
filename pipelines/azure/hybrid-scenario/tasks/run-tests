@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -xe
+
+pushd eshop/tests/UnitTests/
+  dotnet test
+popd
+
+pushd eshop/tests/IntegrationTests/
+  dotnet test
+popd
+
+pushd eshop/tests/FunctionalTests/
+  dotnet test
+popd
