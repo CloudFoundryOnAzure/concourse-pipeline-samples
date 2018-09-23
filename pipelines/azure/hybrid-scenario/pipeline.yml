@@ -44,10 +44,11 @@ jobs:
   serial: true
   public: true
   plan:
-  - get: eshop
-    trigger: true
-  - get: concourse-pipeline-samples
-    trigger: true
+  - aggregate:
+    - get: eshop
+      trigger: true
+    - get: concourse-pipeline-samples
+      trigger: false
   - task: run-tests
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/run-tests.yml
 
@@ -55,12 +56,13 @@ jobs:
   serial: true
   public: true
   plan:
-  - get: eshop
-    trigger: true
-  - get: concourse-pipeline-samples
-    trigger: true
-    passed:
-      - run-tests
+  - aggregate:
+    - get: eshop
+      trigger: true
+      passed:
+        - run-tests
+    - get: concourse-pipeline-samples
+      trigger: false
   - task: prepare-app-manifest
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/app-manifest-prep.yml
     params:
@@ -79,12 +81,13 @@ jobs:
   serial: true
   public: true
   plan:
-  - get: eshop
-    trigger: true
-  - get: concourse-pipeline-samples
-    trigger: true
-    passed:
-      - run-tests
+  - aggregate:
+    - get: eshop
+      trigger: true
+      passed:
+        - run-tests
+    - get: concourse-pipeline-samples
+      trigger: false
   - task: prepare-app-manifest
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/app-manifest-prep.yml
     params:
@@ -103,10 +106,12 @@ jobs:
   serial: true
   public: true
   plan:
-  - get: concourse-pipeline-samples
-    trigger: true
-    passed:
-      - deploy-app-on-azure
+  - aggregate:
+    - get: cf-on-azure
+      trigger: true
+      passed:
+        - deploy-app-on-azure
+    - get: concourse-pipeline-samples
   - task: run-load-tests
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/load-tests.yml
     params:
@@ -117,10 +122,12 @@ jobs:
   serial: true
   public: true
   plan:
-  - get: concourse-pipeline-samples
-    trigger: true
-    passed:
-      - deploy-app-on-azure-stack
+  - aggregate:
+    - get: cf-on-azure-stack
+      trigger: true
+      passed:
+        - deploy-app-on-azure-stack
+    - get: concourse-pipeline-samples
   - task: run-load-tests
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/load-tests.yml
     params:
@@ -133,8 +140,6 @@ jobs:
   plan:
   - get: concourse-pipeline-samples
     trigger: false
-    passed:
-      - load-tests-on-azure
   - task: switch-app-routes
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/update-routes.yml
     params:
@@ -152,8 +157,6 @@ jobs:
   plan:
   - get: concourse-pipeline-samples
     trigger: false
-    passed:
-      - load-tests-on-azure-stack
   - task: switch-app-routes
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/update-routes.yml
     params:
