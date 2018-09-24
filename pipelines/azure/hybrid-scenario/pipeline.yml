@@ -69,12 +69,11 @@ jobs:
       CF_STAGING_DOMAIN:        {{cf-on-azure-staging-domain}}
       CF_SERVICE_NAME:          {{cf-on-azure-service-name}}
       CF_SERVICE_INSTANCE_NAME: {{cf-service-instance-name}}
-      CF_APP_NAME:              {{cf-app-name}}
+      CF_APP_NAME:              eshop
   - put: cf-on-azure
     params:
       manifest: app-manifest-output/manifest.yml
       path: eshop
-      current_app_name: eshop
       show_app_log: true
 
 - name: deploy-app-on-azure-stack
@@ -94,12 +93,11 @@ jobs:
       CF_STAGING_DOMAIN:        {{cf-on-azure-stack-staging-domain}}
       CF_SERVICE_NAME:          {{cf-on-azure-stack-service-name}}
       CF_SERVICE_INSTANCE_NAME: {{cf-service-instance-name}}
-      CF_APP_NAME:              {{cf-app-name}}
+      CF_APP_NAME:              eshop
   - put: cf-on-azure-stack
     params:
       manifest: app-manifest-output/manifest.yml
       path: eshop
-      current_app_name: eshop
       show_app_log: true
 
 - name: load-tests-on-azure
@@ -115,8 +113,8 @@ jobs:
   - task: run-load-tests
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/load-tests.yml
     params:
-      CF_APP_NAME:       {{cf-app-name}}
       CF_STAGING_DOMAIN: {{cf-on-azure-staging-domain}}
+      CF_APP_NAME:       eshop
 
 - name: load-tests-on-azure-stack
   serial: true
@@ -131,8 +129,8 @@ jobs:
   - task: run-load-tests
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/load-tests.yml
     params:
-      CF_APP_NAME:       {{cf-app-name}}
       CF_STAGING_DOMAIN: {{cf-on-azure-stack-staging-domain}}
+      CF_APP_NAME:       eshop
 
 - name: promote-new-version-on-azure
   serial: true
@@ -143,13 +141,14 @@ jobs:
   - task: switch-app-routes
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/update-routes.yml
     params:
-      CF_API:        {{cf-on-azure-api}}
-      CF_USER:       {{cf-on-azure-username}}
-      CF_PWD:        {{cf-on-azure-password}}
-      CF_ORG:        {{cf-on-azure-organization}}
-      CF_SPACE:      {{cf-on-azure-space}}
-      CF_APP_NAME:   {{cf-app-name}}
-      CF_APP_DOMAIN: {{cf-app-domain}}
+      CF_API:            {{cf-on-azure-api}}
+      CF_USER:           {{cf-on-azure-username}}
+      CF_PWD:            {{cf-on-azure-password}}
+      CF_ORG:            {{cf-on-azure-organization}}
+      CF_SPACE:          {{cf-on-azure-space}}
+      CF_STAGING_DOMAIN: {{cf-on-azure-staging-domain}}
+      CF_APP_DOMAIN:     {{cf-app-domain}}
+      CF_APP_NAME:       eshop
 
 - name: promote-new-version-on-azure-stack
   serial: true
@@ -160,10 +159,11 @@ jobs:
   - task: switch-app-routes
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/update-routes.yml
     params:
-      CF_API:        {{cf-on-azure-stack-api}}
-      CF_USER:       {{cf-on-azure-stack-username}}
-      CF_PWD:        {{cf-on-azure-stack-password}}
-      CF_ORG:        {{cf-on-azure-stack-organization}}
-      CF_SPACE:      {{cf-on-azure-stack-space}}
-      CF_APP_NAME:   {{cf-app-name}}
-      CF_APP_DOMAIN: {{cf-app-domain}}
+      CF_API:            {{cf-on-azure-stack-api}}
+      CF_USER:           {{cf-on-azure-stack-username}}
+      CF_PWD:            {{cf-on-azure-stack-password}}
+      CF_ORG:            {{cf-on-azure-stack-organization}}
+      CF_SPACE:          {{cf-on-azure-stack-space}}
+      CF_STAGING_DOMAIN: {{cf-on-azure-stack-staging-domain}}
+      CF_APP_DOMAIN:     {{cf-app-domain}}
+      CF_APP_NAME:       eshop
