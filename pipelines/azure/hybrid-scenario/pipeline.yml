@@ -38,6 +38,14 @@ resources:
     organization: {{cf-on-azure-stack-organization}}
     space:        {{cf-on-azure-stack-space}}
     skip_cert_check: true
+- name: version-semver
+  type: semver
+  source:
+    file:        current-version
+    driver:      git
+    uri:         git@github.com:CloudFoundryOnAzure/concourse-pipeline-samples.git
+    branch:      version
+    private_key: {{version_semver_repo_private_key}}
 
 jobs:
 - name: run-tests
@@ -49,18 +57,25 @@ jobs:
       trigger: true
     - get: concourse-pipeline-samples
       trigger: false
+    - get: version-semver
+      trigger: false
+      params: {bump: patch}
   - task: run-tests
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/run-tests.yml
+  - put: version-semver
+    params: {file: version-semver/number}
 
 - name: deploy-app-on-azure
   serial: true
   public: true
   plan:
   - aggregate:
-    - get: eshop
+    - get: version-semver
       trigger: true
       passed:
         - run-tests
+    - get: eshop
+      trigger: false
     - get: concourse-pipeline-samples
       trigger: false
   - task: prepare-app-manifest
@@ -81,11 +96,13 @@ jobs:
   public: true
   plan:
   - aggregate:
-    - get: eshop
+    - get: version-semver
       trigger: true
       passed:
         - run-tests
     - get: concourse-pipeline-samples
+      trigger: false
+    - get: eshop
       trigger: false
   - task: prepare-app-manifest
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/app-manifest-prep.yml
@@ -105,11 +122,12 @@ jobs:
   public: true
   plan:
   - aggregate:
-    - get: cf-on-azure
+    - get: version-semver
       trigger: true
       passed:
         - deploy-app-on-azure
     - get: concourse-pipeline-samples
+      trigger: false
   - task: run-load-tests
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/load-tests.yml
     params:
@@ -121,11 +139,12 @@ jobs:
   public: true
   plan:
   - aggregate:
-    - get: cf-on-azure-stack
+    - get: version-semver
       trigger: true
       passed:
         - deploy-app-on-azure-stack
     - get: concourse-pipeline-samples
+      trigger: false
   - task: run-load-tests
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/load-tests.yml
     params:
@@ -136,8 +155,11 @@ jobs:
   serial: true
   public: true
   plan:
-  - get: concourse-pipeline-samples
-    trigger: false
+  - aggregate:
+    - get: version-semver
+      trigger: false
+    - get: concourse-pipeline-samples
+      trigger: false
   - task: switch-app-routes
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/update-routes.yml
     params:
@@ -154,8 +176,11 @@ jobs:
   serial: true
   public: true
   plan:
-  - get: concourse-pipeline-samples
-    trigger: false
+  - aggregate:
+    - get: version-semver
+      trigger: false
+    - get: concourse-pipeline-samples
+      trigger: false
   - task: switch-app-routes
     file: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/update-routes.yml
     params:

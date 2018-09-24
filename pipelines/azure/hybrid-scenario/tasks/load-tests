@@ -6,7 +6,8 @@ echo "Installing artillery for load tests: https://artillery.io/docs/getting-sta
 
 npm install -g artillery
 
-export NEXT_APP_URL=http://${CF_APP_NAME}-temp.${CF_STAGING_DOMAIN}/
+semver=`sed "s/\./-/g" version-semver/number`
+export NEXT_APP_URL=http://${CF_APP_NAME}-${semver}.${CF_STAGING_DOMAIN}/
 
 echo "Running artillery load tests for ${NEXT_APP_URL}"
 

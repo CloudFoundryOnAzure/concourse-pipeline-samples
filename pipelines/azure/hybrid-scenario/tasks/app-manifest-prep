@@ -2,8 +2,9 @@
 
 set -xe
 
+semver=`sed "s/\./-/g" version-semver/number`
 cp ./concourse-pipeline-samples/pipelines/azure/hybrid-scenario/manifests/manifest.yml ./app-manifest-output/manifest.yml
-sed -i "s/APPNAME/${CF_APP_NAME}-temp/" ./app-manifest-output/manifest.yml
+sed -i "s/APPNAME/${CF_APP_NAME}-${semver}/" ./app-manifest-output/manifest.yml
 sed -i "s/SERVICEINSTANCENAME/${CF_SERVICE_INSTANCE_NAME}/" ./app-manifest-output/manifest.yml
 sed -i "s/STAGINGDOMAIN/${CF_STAGING_DOMAIN}/" ./app-manifest-output/manifest.yml
 sed -i "s/SERVICENAME/${CF_SERVICE_NAME}/" ./app-manifest-output/manifest.yml

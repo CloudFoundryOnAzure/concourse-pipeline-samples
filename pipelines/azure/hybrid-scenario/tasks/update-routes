@@ -9,18 +9,19 @@ cf api ${CF_API} --skip-ssl-validation
 
 cf login -u ${CF_USER} -p ${CF_PWD} -o "${CF_ORG}" -s "${CF_SPACE}"
 
+semver=`sed "s/\./-/g" version-semver/number`
+
+set +e
 cf apps
-cf map-route ${CF_APP_NAME}-temp ${CF_APP_DOMAIN} --hostname ${CF_APP_NAME}
+cf map-route ${CF_APP_NAME}-${semver} ${CF_APP_DOMAIN} --hostname ${CF_APP_NAME}
 cf unmap-route ${CF_APP_NAME} ${CF_APP_DOMAIN} --hostname ${CF_APP_NAME}
 cf apps
-cf unmap-route ${CF_APP_NAME}-temp ${CF_STAGING_DOMAIN} --hostname ${CF_APP_NAME}-temp
+cf unmap-route ${CF_APP_NAME}-${semver} ${CF_STAGING_DOMAIN} --hostname ${CF_APP_NAME}-${semver}
 cf apps
-cf map-route ${CF_APP_NAME}-temp ${CF_STAGING_DOMAIN} --hostname ${CF_APP_NAME}
+cf map-route ${CF_APP_NAME}-${semver} ${CF_STAGING_DOMAIN} --hostname ${CF_APP_NAME}
 cf unmap-route ${CF_APP_NAME} ${CF_STAGING_DOMAIN} --hostname ${CF_APP_NAME}
 cf apps
-set +e
-cf delete ${CF_APP_NAME}-previous
-set -e
+cf delete ${CF_APP_NAME}-previous -f
 cf rename ${CF_APP_NAME} ${CF_APP_NAME}-previous
-cf rename ${CF_APP_NAME}-temp ${CF_APP_NAME}
+cf rename ${CF_APP_NAME}-${semver} ${CF_APP_NAME}
 cf apps

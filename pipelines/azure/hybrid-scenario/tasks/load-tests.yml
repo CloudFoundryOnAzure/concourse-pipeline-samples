@@ -9,6 +9,7 @@ image_resource:
 
 inputs:
 - name: concourse-pipeline-samples
+- name: version-semver
 
 run:
   path: concourse-pipeline-samples/pipelines/azure/hybrid-scenario/tasks/load-tests
